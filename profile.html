@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Bibliophile's Haven</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #590d22 0%, #300612 100%);
+            color: white;
+            padding: 3rem 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .profile-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .profile-nav {
+            position: absolute;
+            top: 1rem;
+            right: 2rem;
+            z-index: 10;
+        }
+
+        .profile-nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1rem;
+            font-weight: 600;
+        }
+
+        .profile-nav a:hover {
+            color: #c89632;
+        }
+
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-family: 'Lato', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            color: #7a7a7a;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tab-button:hover {
+            color: #590d22;
+        }
+
+        .tab-button.active {
+            color: #590d22;
+            border-bottom-color: #c89632;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .book-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border: 1px solid #f0f0f0;
+            border-bottom: 4px solid transparent;
+        }
+
+        .book-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 22px 45px rgba(89, 13, 34, 0.12);
+            border-bottom-color: #c89632;
+        }
+
+        .book-cover-container {
+            position: relative;
+            height: 360px;
+            overflow: hidden;
+            background-color: #eee;
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .book-card:hover .book-cover {
+            transform: scale(1.05);
+        }
+
+        .book-info {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .book-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #590d22;
+        }
+
+        .book-author {
+            font-size: 0.95rem;
+            color: #7a7a7a;
+            margin-bottom: 1rem;
+        }
+
+        .book-rating {
+            color: #c89632;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .book-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-remove {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-remove:hover {
+            background: #f5c6cb;
+        }
+
+        .settings-form {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: #2b2b2b;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Lato', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #c89632;
+            box-shadow: 0 0 0 3px rgba(200, 150, 50, 0.2);
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 1rem;
+            background-color: #590d22;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-save:hover {
+            background-color: #c89632;
+            color: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(200, 150, 50, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: #7a7a7a;
+        }
+
+        .empty-state h3 {
+            font-family: 'Playfair Display', serif;
+            color: #590d22;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-empty {
+            background-color: #590d22;
+            color: white;
+            padding: 0.75rem 2rem;
+            text-decoration: none;
+            border-radius: 8px;
+            display: inline-block;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-empty:hover {
+            background-color: #c89632;
+            color: #1a1a1a;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-header {
+                padding: 2rem 1rem;
+            }
+
+            .profile-header h1 {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                gap: 0.5rem;
+            }
+
+            .tab-button {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .book-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="profile-header">
+        <div class="profile-nav">
+            <a href="/">← Back to Home</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+        <h1>👤 My Profile</h1>
+        <p>Welcome, <strong>{{ user.username }}</strong>!</p>
+    </header>
+
+    <div class="profile-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('library')">♥️ My Favourites</button>
+            <button class="tab-button" onclick="showTab('completed')">📚 Completed Books</button>
+            <button class="tab-button" onclick="showTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- Favourites Tab -->
+        <div id="library" class="tab-content active">
+            <h2 style="font-family: 'Playfair Display', serif; color: #590d22; margin-bottom: 2rem;">My Favourite Books</h2>
+            {% if favourite_books %}
+                <div class="book-grid">
+                    {% for book in favourite_books %}
+                        <div class="book-card">
+                            <div class="book-cover-container">
+                                <img src="{{ book.image_url }}" alt="Cover of {{ book.title }}" class="book-cover" onerror="this.src='https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400'">
+                                <div style="position: absolute; top: 0.5rem; right: 0.5rem; background: #e74c3c; color: white; padding: 0.5rem; border-radius: 50%; font-size: 1.2rem; cursor: pointer;" onclick="removeFromFavourite('{{ book.book_id }}')">♥️</div>
+                            </div>
+                            <div class="book-info">
+                                <h3 class="book-title">{{ book.title }}</h3>
+                                <p class="book-author">{{ book.author }}</p>
+                                <div class="book-rating">★ {{ book.rating }}</div>
+                                <div class="book-actions">
+                                    <a href="/book/{{ book.book_id }}" style="flex: 1; padding: 0.75rem; background: #590d22; color: white; text-decoration: none; border-radius: 8px; text-align: center; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#c89632'; this.style.color='#1a1a1a';" onmouseout="this.style.background='#590d22'; this.style.color='white';">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <h3>No favourite books yet</h3>
+                    <p>Favourite books you love and they will appear here.</p>
+                    <a href="/" class="btn-empty">Explore Books</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Completed Books Tab -->
+        <div id="completed" class="tab-content">
+            <h2 style="font-family: 'Playfair Display', serif; color: #590d22; margin-bottom: 2rem;">My Completed Books</h2>
+            {% if completed_books %}
+                <div class="book-grid">
+                    {% for book in completed_books %}
+                        <div class="book-card">
+                            <div class="book-cover-container">
+                                <img src="{{ book.image_url }}" alt="Cover of {{ book.title }}" class="book-cover" onerror="this.src='https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400'">
+                            </div>
+                            <div class="book-info">
+                                <h3 class="book-title">{{ book.title }}</h3>
+                                <p class="book-author">{{ book.author }}</p>
+                                <div class="book-rating">★ {{ book.rating }}</div>
+                                <div class="book-actions">
+                                    <a href="/book/{{ book.book_id }}" style="flex: 1; padding: 0.75rem; background: #590d22; color: white; text-decoration: none; border-radius: 8px; text-align: center; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#c89632'; this.style.color='#1a1a1a';" onmouseout="this.style.background='#590d22'; this.style.color='white';">Read Again</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <h3>No completed books yet</h3>
+                    <p>When you finish reading a book, it will appear here.</p>
+                    <a href="/" class="btn-empty">Explore Books</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <h2 style="font-family: 'Playfair Display', serif; color: #590d22; margin-bottom: 2rem; text-align: center;">Account Settings ⚙️</h2>
+            <div class="settings-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" value="{{ user.username }}" readonly style="background: #f5f5f5; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Update your email" value="{{ user.email }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" placeholder="Leave blank to keep current password">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" placeholder="Confirm new password">
+                </div>
+
+                <button class="btn-save" onclick="updateSettings()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        function removeFromFavourite(bookId) {
+            fetch('/api/remove-from-favourite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ book_id: bookId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    console.error('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function updateSettings() {
+            const email = document.getElementById('email').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Validation
+            if (!email) {
+                alert('Email cannot be empty');
+                return;
+            }
+
+            if (newPassword && newPassword.length < 6) {
+                alert('Password must be at least 6 characters long');
+                return;
+            }
+
+            if (newPassword && newPassword !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            const settings = {
+                email: email
+            };
+
+            if (newPassword) {
+                settings.password = newPassword;
+            }
+
+            fetch('/api/update-settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Settings updated successfully!');
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Library | Bibliophile's Haven</title>
+    <!-- Google Fonts for vibrant and classic typography -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header class="hero" style="padding: 3rem 1.5rem;">
+        <div class="top-nav" style="position: absolute; top: 1rem; right: 2rem; z-index: 10;">
+            <a href="/" class="btn-classic" style="text-decoration: none; padding: 0.5rem 1rem; font-size: 0.9rem;">🏠
+                Home</a>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 style="font-size: 3rem; margin-bottom: 0.5rem;"><a href="/"
+                    style="color: white; text-decoration: none;">My Library</a></h1>
+            <p style="font-size: 1.2rem;">Your personal collection of favorited books.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="results">
+            <div id="loading" class="loading" style="display: none;">Gathering your collection...</div>
+            <div class="book-grid" id="libraryGrid">
+                <!-- Books rendered by JS -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy;Bibliophile's Haven. Designed for Book Lovers.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const libraryGrid = document.getElementById('libraryGrid');
+            const loading = document.getElementById('loading');
+
+            loadLibrary();
+
+            function loadLibrary() {
+                const liked = JSON.parse(localStorage.getItem('liked_books') || '[]');
+
+                if (liked.length === 0) {
+                    libraryGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 1rem;">
+                            <h2 style="font-family: var(--font-heading); color: var(--primary-burgundy); font-size: 2rem; margin-bottom: 1rem;">Your library is empty</h2>
+                            <p style="color: #666; font-size: 1.2rem; margin-bottom: 2rem;">Start exploring and adding books to your favorites collection.</p>
+                            <a href="/" class="btn-classic" style="text-decoration: none; display: inline-block;">Explore Books</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                libraryGrid.style.display = 'none';
+                loading.style.display = 'block';
+
+                fetch('/api/books_by_ids', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ book_ids: liked })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        renderBooks(data);
+                        loading.style.display = 'none';
+                        libraryGrid.style.display = 'grid';
+                    })
+                    .catch(err => {
+                        console.error('Error fetching library:', err);
+                        loading.style.display = 'none';
+                        libraryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red;">Failed to load library.</p>';
+                    });
+            }
+
+            function renderBooks(books) {
+                if (!books || books.length === 0) {
+                    libraryGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No books found in your library.</p>';
+                    return;
+                }
+
+                libraryGrid.innerHTML = books.map(book => `
+                    <div class="book-card">
+                        <a href="/book/${book.book_id}" style="text-decoration: none; color: inherit; display: block;">
+                            <div class="book-cover-container">
+                                <img src="${book.image_url}" alt="Cover of ${book.title}" class="book-cover" onerror="this.src='https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400'">
+                                <div class="book-rating">★ ${book.rating}</div>
+                            </div>
+                        </a>
+                        <div class="book-info">
+                            <span class="book-genre">${book.genre}</span>
+                            <a href="/book/${book.book_id}" style="text-decoration: none; color: inherit;">
+                                <h3 class="book-title">${book.title}</h3>
+                            </a>
+                            <p class="book-author">by ${book.author}</p>
+                            <p class="book-desc">${book.description}</p>
+                            <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+                                <a href="/book/${book.book_id}" class="btn-classic" style="flex: 1; text-align: center; font-size: 0.85rem; padding: 0.75rem; text-decoration: none;">📖 Read Sample</a>
+                                <button class="btn-classic" style="flex: 1; background: transparent; color: var(--primary-burgundy); text-align: center; font-size: 0.85rem; padding: 0.75rem;" onclick="removeFavorite('${book.book_id}', this)">❌ Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            window.removeFavorite = function (bookId, btn) {
+                const card = btn.closest('.book-card');
+                if (card) {
+                    card.classList.add('removing');
+
+                    // Simple timeout to allow animation to play
+                    setTimeout(() => {
+                        let liked = JSON.parse(localStorage.getItem('liked_books') || '[]');
+                        liked = liked.filter(id => String(id) !== String(bookId));
+                        localStorage.setItem('liked_books', JSON.stringify(liked));
+
+                        card.remove();
+
+                        if (liked.length === 0) {
+                            loadLibrary(); // Trigger empty state
+                        }
+                    }, 300);
+                }
+            };
+        });
+    </script>
+</body>
+
+</html>

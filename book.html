@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ book.title }} - Bibliophile's Haven</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        window.USER_LOGGED_IN = "{{ 'true' if session.get('user_id') else 'false' }}";
+    </script>
+    <style>
+        /* ========== Book Detail Header ========== */
+        .book-detail-container {
+            display: flex;
+            gap: 3rem;
+            margin-top: 2rem;
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--primary-burgundy);
+        }
+        .detail-cover {
+            width: 280px;
+            min-width: 280px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .detail-info { flex: 1; }
+        .detail-genre {
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .detail-title {
+            font-size: 2.8rem;
+            color: var(--primary-burgundy);
+            margin-bottom: 0.5rem;
+            line-height: 1.1;
+        }
+        .detail-author {
+            font-size: 1.2rem;
+            color: #555;
+            font-style: italic;
+            font-family: var(--font-heading);
+            margin-bottom: 1.5rem;
+        }
+        .detail-stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-rating {
+            font-weight: bold;
+            color: var(--text-dark);
+            background: #fbf9f6;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--accent-gold);
+        }
+        .btn-like {
+            background: transparent;
+            border: 2px solid var(--primary-burgundy);
+            color: var(--primary-burgundy);
+            padding: 0.5rem 2rem;
+            border-radius: 30px;
+            font-weight: bold;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-like.liked {
+            background: var(--primary-burgundy);
+            color: white;
+        }
+        .btn-like:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(89, 13, 34, 0.2);
+        }
+
+        /* ========== Book Reader ========== */
+        .reader-section {
+            margin-top: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .reader-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .reader-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--primary-burgundy);
+            margin: 0;
+        }
+
+        .reader-controls-top {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .font-size-btn {
+            background: #fbf9f6;
+            border: 1px solid #d4c5a9;
+            color: #5a4e3a;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .font-size-btn:hover {
+            background: var(--primary-burgundy);
+            color: white;
+            border-color: var(--primary-burgundy);
+        }
+
+        /* ---- Reading Progress ---- */
+        .reading-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e8e0d0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .reading-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-burgundy), var(--accent-gold));
+            border-radius: 3px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .reading-progress-text {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #8a7e6b;
+            margin-bottom: 1rem;
+            font-family: 'Lato', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        /* ---- Chapter Navigation (top) ---- */
+        .chapter-tabs {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+            background: #f5f0e8;
+            padding: 0.5rem;
+            border-radius: 12px 12px 0 0;
+            border: 1px solid #d4c5a9;
+            border-bottom: none;
+        }
+
+        .chapter-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Lato', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #8a7e6b;
+            transition: all 0.25s;
+            position: relative;
+        }
+
+        .chapter-tab:hover {
+            background: rgba(255,255,255,0.6);
+            color: #5a4e3a;
+        }
+
+        .chapter-tab.active {
+            background: white;
+            color: var(--primary-burgundy);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* ---- The Book Page ---- */
+        .book-page-wrapper {
+            position: relative;
+            perspective: 1200px;
+        }
+
+        .book-page {
+            background: linear-gradient(135deg, #fdf8f0 0%, #faf3e6 30%, #f7eed8 100%);
+            border: 1px solid #d4c5a9;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            padding: 3.5rem 4rem 4rem;
+            min-height: 500px;
+            position: relative;
+            box-shadow:
+                0 1px 4px rgba(0,0,0,0.04),
+                0 8px 32px rgba(0,0,0,0.06),
+                inset 0 0 80px rgba(210,190,160,0.15);
+            animation: pageAppear 0.4s ease-out;
+        }
+
+        @keyframes pageAppear {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* faux page edges on the right */
+        .book-page::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: -3px;
+            bottom: 8px;
+            width: 4px;
+            background: linear-gradient(to right,
+                rgba(180,165,140,0.25),
+                rgba(180,165,140,0.05));
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* subtle page fold top-right */
+        .book-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(225deg,
+                #f0e8d8 0%, #f0e8d8 50%,
+                transparent 50%);
+            border-bottom-left-radius: 8px;
+            box-shadow: -2px 2px 4px rgba(0,0,0,0.04);
+            z-index: 2;
+        }
+
+        .chapter-heading {
+            font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary-burgundy);
+            text-align: center;
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .chapter-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .chapter-divider::before,
+        .chapter-divider::after {
+            content: '';
+            height: 1px;
+            width: 60px;
+            background: linear-gradient(to right, transparent, #b4a58c, transparent);
+        }
+
+        .chapter-divider .ornament {
+            color: var(--accent-gold);
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .book-paragraph {
+            font-family: 'Merriweather', 'Georgia', serif;
+            font-size: 1.05rem;
+            line-height: 2;
+            color: #3a3428;
+            text-align: justify;
+            text-indent: 2em;
+            margin-bottom: 1.2rem;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+        }
+
+        .book-paragraph:first-of-type {
+            text-indent: 0;
+        }
+
+        .book-paragraph:first-of-type::first-letter {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.8rem;
+            float: left;
+            line-height: 0.8;
+            padding-right: 0.15em;
+            padding-top: 0.1em;
+            color: var(--primary-burgundy);
+            font-weight: 700;
+        }
+
+        /* ---- Page Footer / Navigation ---- */
+        .page-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #d4c5a9;
+        }
+
+        .page-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            color: #8a7e6b;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+
+        .page-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary-burgundy), #6b0f28);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Lato', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            box-shadow: 0 3px 12px rgba(89,13,34,0.2);
+        }
+
+        .page-nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(89,13,34,0.3);
+        }
+
+        .page-nav-btn:disabled {
+            background: #c5b9a8;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .page-nav-btn .arrow {
+            font-size: 1.2rem;
+        }
+
+        /* ---- Keyboard Shortcut Hint ---- */
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #a89e8c;
+            font-family: 'Lato', sans-serif;
+        }
+
+        .keyboard-hint kbd {
+            background: #f0e8d8;
+            border: 1px solid #d4c5a9;
+            border-radius: 4px;
+            padding: 0.15rem 0.5rem;
+            font-size: 0.75rem;
+            font-family: inherit;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+
+        /* ========== Responsive ========== */
+        @media (max-width: 768px) {
+            .book-detail-container {
+                flex-direction: column;
+                padding: 1.5rem;
+            }
+            .detail-cover {
+                width: 100%;
+                max-width: 280px;
+                min-width: unset;
+                margin: 0 auto;
+            }
+            .detail-title { font-size: 2rem; }
+            .book-page { padding: 2rem 1.5rem 2.5rem; }
+            .chapter-heading { font-size: 1.6rem; }
+            .book-paragraph { font-size: 0.95rem; line-height: 1.85; }
+            .page-nav-btn { padding: 0.6rem 1rem; font-size: 0.8rem; }
+            .chapter-tabs { gap: 0.15rem; padding: 0.35rem; }
+            .chapter-tab { padding: 0.4rem 0.65rem; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="hero" style="padding: 2rem 1.5rem;">
+        <div class="top-nav" style="position: absolute; top: 1rem; right: 2rem; z-index: 10; display: flex; gap: 1rem;">
+            <a href="{{ url_for('profile') }}" class="btn-classic" style="text-decoration: none; padding: 0.5rem 1rem; font-size: 0.9rem;">📋 My Profile</a>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 style="font-size: 2.5rem; margin-bottom: 0;"><a href="/" style="color: white; text-decoration: none;">Bibliophile's Haven</a></h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <a href="/" style="display: inline-block; margin-top: 2rem; color: var(--primary-burgundy); text-decoration: none; font-weight: bold;">&larr; Back to Library</a>
+        
+        <!-- Book Info Card -->
+        <div class="book-detail-container">
+            <div>
+                <img src="{{ book.image_url }}" alt="Cover of {{ book.title }}" class="detail-cover" onerror="this.src='https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400'">
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-genre">{{ book.genre }}</span>
+                <h2 class="detail-title">{{ book.title }}</h2>
+                <div class="detail-author">by {{ book.author }}</div>
+                
+                <div class="detail-stats">
+                    <div class="detail-rating">⭐ {{ book.rating }} / 5.0</div>
+                    <button id="favouriteBtn" class="btn-like" data-id="{{ book.book_id }}">
+                        <span class="favourite-icon">♡</span> <span class="favourite-text">Add to Favourites</span>
+                    </button>
+                </div>
+                
+                <p style="font-size: 1.1rem; color: #444; line-height: 1.6;">{{ book.description }}</p>
+            </div>
+        </div>
+
+        <!-- ========== BOOK READER ========== -->
+        <div class="reader-section" id="bookReader">
+            <div class="reader-header">
+                <h2>📖 Read Book</h2>
+                <div class="reader-controls-top">
+                    <button class="font-size-btn" id="fontDecrease" title="Decrease font size">A−</button>
+                    <button class="font-size-btn" id="fontIncrease" title="Increase font size">A+</button>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="reading-progress-bar">
+                <div class="reading-progress-fill" id="progressFill"></div>
+            </div>
+            <div class="reading-progress-text" id="progressText">Chapter 1 of {{ book.chapters | length }}</div>
+
+            <!-- Chapter Tabs -->
+            <div class="chapter-tabs" id="chapterTabs">
+                {% for chapter in book.chapters %}
+                <button class="chapter-tab {% if loop.index0 == 0 %}active{% endif %}"
+                        data-index="{{ loop.index0 }}">
+                    Ch {{ loop.index }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <!-- Book Page -->
+            <div class="book-page-wrapper">
+                <div class="book-page" id="bookPage">
+                    <!-- Content injected by JS -->
+                </div>
+            </div>
+
+            <!-- Keyboard Hint -->
+            <div class="keyboard-hint">
+                Use <kbd>←</kbd> <kbd>→</kbd> arrow keys or click the buttons to navigate chapters
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Bibliophile's Haven. Designed for Book Lovers.</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const bookId = '{{ book.book_id }}';
+
+        // ============ Chapters Data ============
+        const chaptersData = '{{ book.chapters | tojson | safe }}';
+        const chapters = chaptersData ? JSON.parse(chaptersData) : [];
+
+        const totalChapters = chapters.length;
+        let currentChapter = 0;
+        let fontSize = 1.05; // rem
+
+        const bookPage      = document.getElementById('bookPage');
+        const progressFill  = document.getElementById('progressFill');
+        const progressText  = document.getElementById('progressText');
+        const chapterTabs   = document.querySelectorAll('.chapter-tab');
+
+        // ============ Render a Chapter ============
+        function renderChapter(index) {
+            if (index < 0 || index >= totalChapters) return;
+            currentChapter = index;
+
+            const ch = chapters[index];
+
+            // Build page HTML
+            let html = `
+                <h3 class="chapter-heading">${ch.heading}</h3>
+                <div class="chapter-divider">
+                    <span class="ornament">✦</span>
+                </div>
+            `;
+
+            ch.paragraphs.forEach(p => {
+                html += `<p class="book-paragraph" style="font-size: ${fontSize}rem;">${p}</p>`;
+            });
+
+            // Navigation footer
+            html += `
+                <div class="page-footer">
+                    <button class="page-nav-btn" id="prevChapterBtn" ${index === 0 ? 'disabled' : ''}>
+                        <span class="arrow">‹</span> Previous
+                    </button>
+                    <span class="page-number">— ${index + 1} of ${totalChapters} —</span>
+                    <button class="page-nav-btn" id="nextChapterBtn" ${index === totalChapters - 1 ? 'disabled' : ''}>
+                        Next <span class="arrow">›</span>
+                    </button>
+                </div>
+            `;
+
+            bookPage.innerHTML = html;
+
+            // Animate
+            bookPage.style.animation = 'none';
+            bookPage.offsetHeight; // reflow
+            bookPage.style.animation = 'pageAppear 0.4s ease-out';
+
+            // Update progress
+            const pct = ((index + 1) / totalChapters) * 100;
+            progressFill.style.width = pct + '%';
+            progressText.textContent = `Chapter ${index + 1} of ${totalChapters}`;
+
+            // Update tabs
+            chapterTabs.forEach(tab => {
+                tab.classList.toggle('active', parseInt(tab.dataset.index) === index);
+            });
+
+            // Mark book as completed if on the last chapter
+            if (index === totalChapters - 1) {
+                markBookCompleted();
+            }
+
+            // Bind nav buttons
+            document.getElementById('prevChapterBtn').addEventListener('click', () => renderChapter(currentChapter - 1));
+            document.getElementById('nextChapterBtn').addEventListener('click', () => renderChapter(currentChapter + 1));
+
+            // Scroll to reader
+            document.getElementById('bookReader').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ============ Tab Clicks ============
+        chapterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                renderChapter(parseInt(tab.dataset.index));
+            });
+        });
+
+        // ============ Keyboard Nav ============
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') renderChapter(currentChapter + 1);
+            if (e.key === 'ArrowLeft')  renderChapter(currentChapter - 1);
+        });
+
+        // ============ Mark Book Completed ============
+        function markBookCompleted() {
+            if (window.USER_LOGGED_IN !== 'true') return;
+            
+            fetch('/api/mark-book-completed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                // Silently succeed, maybe just logging to console
+                console.log('Book completed status:', data.message);
+            })
+            .catch(err => console.error('Error marking book completed:', err));
+        }
+
+        // ============ Font Size Controls ============
+        document.getElementById('fontIncrease').addEventListener('click', () => {
+            if (fontSize < 1.6) {
+                fontSize += 0.1;
+                document.querySelectorAll('.book-paragraph').forEach(p => p.style.fontSize = fontSize + 'rem');
+            }
+        });
+
+        document.getElementById('fontDecrease').addEventListener('click', () => {
+            if (fontSize > 0.8) {
+                fontSize -= 0.1;
+                document.querySelectorAll('.book-paragraph').forEach(p => p.style.fontSize = fontSize + 'rem');
+            }
+        });
+
+        // ============ Initial Render ============
+        if (totalChapters > 0) {
+            renderChapter(0);
+        } else {
+            bookPage.innerHTML = '<p style="text-align:center; color:#8a7e6b; padding:3rem;">No content available for this book.</p>';
+        }
+
+        // ============ Favourite Button Logic ============
+        const favouriteBtn = document.getElementById('favouriteBtn');
+        const favouriteIcon = favouriteBtn.querySelector('.favourite-icon');
+        const favouriteText = favouriteBtn.querySelector('.favourite-text');
+
+        checkIfFavourite(bookId);
+
+        favouriteBtn.addEventListener('click', () => {
+            fetch('/api/is-book-favourite?book_id=' + bookId)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.is_favourite) removeFromFavourite(bookId);
+                    else addToFavourite(bookId);
+                })
+                .catch(err => console.error('Error:', err));
+        });
+
+        function checkIfFavourite(id) {
+            fetch('/api/is-book-favourite?book_id=' + id)
+                .then(r => r.json())
+                .then(data => data.is_favourite ? setFavouritedState() : setNotFavouritedState())
+                .catch(err => console.error('Error checking favourite:', err));
+        }
+
+        function addToFavourite(id) {
+            fetch('/api/add-to-favourite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: id })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) { setFavouritedState(); }
+                else console.error('Error: ' + data.error);
+            })
+            .catch(err => console.error('Error:', err));
+        }
+
+        function removeFromFavourite(id) {
+            fetch('/api/remove-from-favourite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: id })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) { setNotFavouritedState(); }
+                else console.error('Error: ' + data.error);
+            })
+            .catch(err => console.error('Error:', err));
+        }
+
+        function setFavouritedState() {
+            favouriteBtn.classList.add('liked');
+            favouriteIcon.textContent = '♥';
+            favouriteText.textContent = 'Favourited';
+        }
+
+        function setNotFavouritedState() {
+            favouriteBtn.classList.remove('liked');
+            favouriteIcon.textContent = '♡';
+            favouriteText.textContent = 'Add to Favourites';
+        }
+    });
+    </script>
+</body>
+</html>

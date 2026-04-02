@@ -68,9 +68,6 @@ python -m venv venv
 pip install -r requirements.txt
 flask run   # or: python app.py
 ```
-
-Open: `http://127.0.0.1:5000`
-
 ---
 
 ## 🔮 Future Work

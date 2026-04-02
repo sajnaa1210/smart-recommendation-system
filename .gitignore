@@ -25,3 +25,4 @@ var/
 *.swp
 *.swo
 .DS_Store
+data/kaggle_raw.csv

@@ -30,8 +30,13 @@ class DatabaseManager:
             self.db_path = '/tmp/users.db'  # Vercel's /tmp directory
             self._init_sqlite()
         else:
-            # Use a persistent JSON file instead of in-memory dict
-            self.json_path = os.path.join('data', 'users.json')
+            # Detect if we are on Vercel for the JSON fallback path
+            is_vercel = os.getenv('VERCEL') is not None
+            if is_vercel:
+                self.json_path = '/tmp/users.json'
+            else:
+                self.json_path = os.path.join('data', 'users.json')
+            
             self._ensure_json_file()
     
     def _ensure_json_file(self):
@@ -79,7 +84,11 @@ class DatabaseManager:
         except Exception as e:
             print(f"Warning: Could not initialize SQLite: {e}")
             self.use_sqlite = False  # Fallback to JSON file
-            self.json_path = os.path.join('data', 'users.json')
+            is_vercel = os.getenv('VERCEL') is not None
+            if is_vercel:
+                self.json_path = '/tmp/users.json'
+            else:
+                self.json_path = os.path.join('data', 'users.json')
             self._ensure_json_file()
     
     def get_user(self, username):
